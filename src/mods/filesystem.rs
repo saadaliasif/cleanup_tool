@@ -5,7 +5,12 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
-pub fn clean(logger: &Logger, dry_run: bool, advanced: bool) -> Result<(usize, usize)> {
+pub fn clean(
+    logger: &Logger,
+    dry_run: bool,
+    advanced: bool,
+    wipe: bool,          // <-- NEW
+) -> Result<(usize, usize)> {
     logger.info("Cleaning Windows file system traces...");
     let mut cleaned = 0;
     let mut failed = 0;
@@ -36,9 +41,7 @@ pub fn clean(logger: &Logger, dry_run: bool, advanced: bool) -> Result<(usize, u
     if !dry_run {
         for drive in &drives {
             let recycle = format!("{}\\$Recycle.Bin", drive.trim_end_matches('\\'));
-            let _ = Command::new("cmd")
-                .args(&["/c", &format!("rd /s /q \"{}\" 2>nul", recycle)])
-                .output();
+            let _ = crate::utils::remove_dir_contents(&recycle, dry_run, logger);
         }
         cleaned += 1;
     } else {
@@ -58,18 +61,18 @@ pub fn clean(logger: &Logger, dry_run: bool, advanced: bool) -> Result<(usize, u
         cleaned += 1;
     }
 
-    // SRUDB.dat
-    if safe_remove(r"C:\Windows\System32\sru\SRUDB.dat", dry_run, logger) {
+    // SRUDB.dat — NOW USES secure wipe!
+    if safe_remove(r"C:\Windows\System32\sru\SRUDB.dat", dry_run, wipe, logger) {
         cleaned += 1;
     }
 
-    // Windows.edb (Advanced only)
+    // Windows.edb (Advanced only) — NOW USES secure wipe!
     if advanced && !dry_run {
         logger.verbose("Stopping Windows Search service...");
         let _ = Command::new("net").args(&["stop", "WSearch"]).output();
 
         let edb = r"C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb";
-        if safe_remove(edb, dry_run, logger) {
+        if safe_remove(edb, dry_run, wipe, logger) {
             cleaned += 1;
             logger.verbose("Cleaned Windows Search Index (Advanced mode)");
         }

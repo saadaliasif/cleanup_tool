@@ -2,7 +2,7 @@ use crate::logger::Logger;
 use anyhow::Result;
 use std::process::Command;
 
-pub fn clean(logger: &Logger, dry_run: bool) -> Result<(usize, usize)> {
+pub fn clean(logger: &Logger, dry_run: bool, _wipe: bool) -> Result<(usize, usize)> {
     logger.info("Cleaning Windows event logs...");
     let mut cleaned = 0;
     let mut failed = 0;
@@ -11,7 +11,6 @@ pub fn clean(logger: &Logger, dry_run: bool) -> Result<(usize, usize)> {
         logger.verbose("[DRY RUN] Would clear all event logs");
         cleaned = 180;
     } else {
-        // Get all log names
         let output = Command::new("wevtutil").arg("el").output()?;
         let logs = String::from_utf8_lossy(&output.stdout);
 
@@ -30,7 +29,6 @@ pub fn clean(logger: &Logger, dry_run: bool) -> Result<(usize, usize)> {
             }
         }
 
-        // Backup method for critical logs
         for critical in &["Application", "System", "Security"] {
             let _ = Command::new("wevtutil").args(&["cl", critical]).output();
         }

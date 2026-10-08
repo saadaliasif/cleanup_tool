@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 
 #[derive(Parser)]
 #[command(name = "cleanup")]
-#[command(about = "saads cleanup tool")]
+#[command(about = "Red team cleanup tool — Rust edition")]
 pub struct Cli {
     #[arg(short, long)]
     pub dry_run: bool,
@@ -21,6 +21,9 @@ pub struct Cli {
 
     #[arg(short, long)]
     pub advanced: bool,
+
+    #[arg(short, long)]        // <-- NEW
+    pub wipe: bool,
 
     #[arg(long)]
     pub log_file: Option<String>,

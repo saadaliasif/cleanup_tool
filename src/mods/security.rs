@@ -2,7 +2,7 @@ use crate::logger::Logger;
 use anyhow::Result;
 use std::process::Command;
 
-pub fn clean(logger: &Logger, dry_run: bool) -> Result<(usize, usize)> {
+pub fn clean(logger: &Logger, dry_run: bool, _wipe: bool) -> Result<(usize, usize)> {
     logger.info("Cleaning security product artifacts...");
     let mut cleaned = 0;
 

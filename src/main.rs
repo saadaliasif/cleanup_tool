@@ -11,6 +11,7 @@ use std::io::{self, Write};
 fn main() -> Result<()> {
     let args = cli::Cli::parse();
 
+    // Handle --list
     if args.list {
         println!("Available cleaning modules:");
         println!("  events     - Windows Event Logs");
@@ -28,10 +29,12 @@ fn main() -> Result<()> {
     logger.banner();
     logger.warning();
 
+    // Check admin unless dry run
     if !args.dry_run {
         privilege::check_admin()?;
     }
 
+    // Confirmation prompt
     if !args.force && !args.dry_run {
         print!("Do you want to continue? [y/N] ");
         io::stdout().flush()?;
@@ -47,6 +50,11 @@ fn main() -> Result<()> {
         logger.info("Running in DRY RUN mode — no changes will be made");
     }
 
+    if args.wipe {
+        logger.info("Secure wipe enabled — files will be overwritten before deletion");
+    }
+
+    // Determine which modules to run
     let modules_to_run = if args.modules.is_empty() {
         vec![
             cli::Module::Events,
@@ -61,6 +69,7 @@ fn main() -> Result<()> {
         args.modules.clone()
     };
 
+    // Run modules and accumulate stats
     let mut total_cleaned = 0;
     let mut total_failed = 0;
 
@@ -68,7 +77,7 @@ fn main() -> Result<()> {
         let name = format!("{:?}", module).to_lowercase();
         logger.info(&format!("Running module: {}", name));
 
-        match mods::run_module(*module, args.dry_run, args.advanced, &logger) {
+        match mods::run_module(*module, args.dry_run, args.advanced, args.wipe, &logger) {
             Ok((c, f)) => {
                 total_cleaned += c;
                 total_failed += f;
@@ -80,6 +89,7 @@ fn main() -> Result<()> {
         }
     }
 
+    // Summary
     println!();
     logger.success("Cleaning Complete!");
     logger.info(&format!("Total items cleaned: {}", total_cleaned));

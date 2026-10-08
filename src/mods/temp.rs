@@ -2,10 +2,15 @@ use crate::logger::Logger;
 use anyhow::Result;
 use std::process::Command;
 
-pub fn clean(logger: &Logger, dry_run: bool, advanced: bool) -> Result<(usize, usize)> {
+pub fn clean(
+    logger: &Logger,
+    dry_run: bool,
+    advanced: bool,
+    _wipe: bool,          // <-- signature updated
+) -> Result<(usize, usize)> {
     logger.info("Cleaning Windows temporary files...");
     let mut cleaned = 0;
-    let mut failed = 0;
+    let failed = 0;
 
     let temp = std::env::var("TEMP").unwrap_or_default();
     let local = std::env::var("LOCALAPPDATA").unwrap_or_default();
